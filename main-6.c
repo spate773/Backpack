@@ -1,0 +1,223 @@
+/* -----------------------------------------
+Program 1: Elementary Cellular Automaton
+Course: CS 211, Spring 2026, UIC
+Author: Saanvi Patel
+Description: simulating Cellular Automata 
+with arrays and structs, loops and boolean
+logic, functions, and output formatting ; D
+------------------------------------------- */
+
+#include <stdio.h>
+#include <stdbool.h> 
+
+const int WORLD_SIZE = 65;
+
+typedef struct cell_struct{
+    bool state[3]; //active status for [left, me, right] cells 
+    bool active; //current status for me
+    int total; //running accumulated count of this cell's active status for all generations
+} cell;
+
+//converts an 8-bit integer rule (0-255) to array of bit
+bool setBitArray(bool bitArray[8], int rule) {
+    if (rule < 0 || rule > 255){
+        return false;
+    }
+    for (int i = 0; i < 8; i++){
+        bitArray[i] = rule % 2;
+        rule = rule/2;
+    }
+    return true;
+}
+
+//This converts 3-bit state array to its 
+//associated index of the rule# bit array
+int stateToIndex(bool state[3]) {
+    int index = 0;
+    if (state[0]){ //left bit
+        index += 4;
+    } 
+    if (state[1]){  //middle bit
+        index +=2;
+    }
+    if (state[2]){  //right bit
+        index +=1;
+    }
+    return index;
+}
+
+//Updates the state array for all cells
+void setStates(cell world[WORLD_SIZE]) {
+    for (int i = 0; i < WORLD_SIZE; i++){
+        int left_i;
+        int right_i;
+
+        if(i == 0){ //left 
+            left_i = WORLD_SIZE - 1;
+        } else {
+            left_i = i - 1;
+        }
+
+        if(i == (WORLD_SIZE - 1)){ //right 
+            right_i = 0;
+        } else{
+            right_i = i + 1;  
+        }
+
+    world[i].state[0] = world[left_i].active; //left neighbor
+    world[i].state[1] = world[i].active;  //current self
+    world[i].state[2] = world[right_i].active; // right neighbor
+    }
+
+    return;
+}
+
+//Evolve the world to the next generation with rule array
+//also updates cell active states 
+int evolveWorld(cell world[WORLD_SIZE], bool ruleBitArray[8]) {
+
+    bool next[WORLD_SIZE];
+    int count = 0;
+
+    //This will determine the next generation value
+    for (int i = 0; i < WORLD_SIZE; i++){
+        int index = stateToIndex(world[i].state);
+        next[i] = ruleBitArray[index];
+    }
+
+    //updates the totals and world : )
+    for (int i = 0; i < WORLD_SIZE; i++){
+        world[i].active = next[i];
+        world[i].total += world[i].active;
+        count += world[i].active;
+    }
+    return count;
+}
+
+
+int main() {
+    cell world[WORLD_SIZE];
+
+    printf("Welcome to the Elementary Cellular Automaton!\n");
+    printf("Enter the rule # (0-255): \n");
+
+    int rule; 
+    bool r_bits[8];
+    scanf("%d", &rule);
+
+    //The statement will repeat and ask to enter again until valid input
+    while(!setBitArray(r_bits, rule)){
+        printf("Enter the rule # (0-255): ");
+        printf("\n");
+        scanf("%d", &rule);
+    }
+
+    //prints the bit array in correct binary order
+    printf("\nThe bit array for rule #%d is ", rule);
+    for (int i = 7; i >= 0; i--){
+        printf("%d", r_bits[i]);
+    }
+    printf("\n");
+    printf("\n");
+
+    // prints all possible cell states.
+    printf("The evolution of all possible states are as follows:\n");
+    printf("|ooo|   |oo'|   |o'o|   |o''|   |'oo|   |'o'|   |''o|   |'''|");
+    printf("\n");
+
+    for(int i = 7; i >= 0; i--){
+        if(r_bits[i] == 0){
+            printf("|'|     ");  //for inactive 
+        } else{
+            printf("|o|     ");   //for active
+        }
+    }
+    //      steps from the user and initialize the world with ONLY the 
+    //      middle cell active, all other cells should be inactive; 
+    int gen;
+
+    printf("Enter the number of generations (1-99): ");
+    scanf("%d", &gen);
+
+    while (gen < 1 || gen > 99){
+        printf("Enter the number of generations (1-99): ");
+        printf("\n");
+        scanf("%d", &gen);
+    }
+
+    //intitalize world !!!!
+    for (int i = 0; i < WORLD_SIZE; i++){
+        world[i].active = false;
+        world[i].total = 0;
+    }
+
+    int mid = WORLD_SIZE / 2;
+    world[mid].active = true;
+    world[mid].total = 1;
+
+    //initialize state
+    setStates(world);
+    
+    
+    printf("Initializing world & evolving...\n");
+
+    //This prints the initial generation
+    int count = 1;
+    for (int i = 0; i < WORLD_SIZE; i++){
+        if (world[i].active){
+            printf("o");
+        } else{
+            printf("'");
+        }
+    }
+    printf("  %d\n", count);
+
+    //prints the next generation
+    for(int g = 1; g < gen; g++){
+        count = evolveWorld(world, r_bits);  //update world
+        setStates(world);
+        for (int i = 0; i < WORLD_SIZE; i++){  //print active and inactive cells
+            if (world[i].active){
+                printf("o");
+            } else{
+                printf("'");
+            }
+        }
+        printf(" %d\n", count);  //cell count
+    }
+
+    //prints horizontal line
+    for (int i = 0; i < WORLD_SIZE; i++){
+        printf("_");
+    }
+    printf("\n");
+
+    //prints the top 10 digits 
+    for (int i = 0; i < WORLD_SIZE; i++){
+        int c = world[i].total;
+
+        if (c == 0){
+            printf(" ");
+        } else if ( c < 10){
+            printf(" ");
+        } else {
+            printf("%d", c / 10);  //tens place
+        }
+    }   
+    printf("\n");
+
+    //prints bottom row digits
+    for (int i = 0; i < WORLD_SIZE; i++){
+        int c = world[i].total;
+
+        if ( c == 0){
+            printf(" ");
+        } else {
+            printf("%d", c % 10); //ones place
+        }
+    }
+    printf("\n");
+    return 0;
+}
+
+//THE END : - D
