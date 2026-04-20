@@ -10,7 +10,7 @@ The program converts this rule into an 8-bit binary representation.
 Each cell updates its state based on its left neighbor, itself, and its right neighbor.
 The simulation starts with a single active cell in the center.
 The world evolves over a user-defined number of generations.
-
+ 
 Features
 Rule-based simulation using elementary cellular automata logic
 Circular (wrap-around) world behavior
